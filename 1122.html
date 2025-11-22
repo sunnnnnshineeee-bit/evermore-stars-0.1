@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvermoreStars | 未读章节</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'acid-black': '#050505',
+                        'neon-pink': '#ff0055',
+                        'neon-blue': '#00f0ff',
+                        'deep-purple': '#1a0b2e',
+                    },
+                    fontFamily: {
+                        'display': ['Orbitron', 'sans-serif'],
+                        'body': ['Montserrat', 'Noto Sans SC', 'sans-serif'], // 确保中文支持
+                    },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, #222 1px, transparent 1px), linear-gradient(to bottom, #222 1px, transparent 1px)",
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'spin-slow': 'spin 15s linear infinite',
+                        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+                        'ripple': 'ripple 2.5s cubic-bezier(0, 0.2, 0.8, 1) infinite',
+                        'fade-out': 'fadeOut 1s ease-out forwards 2.5s',
+                        'marquee': 'marquee 20s linear infinite', // 新增跑马灯动画
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: '1', filter: 'brightness(1)' },
+                            '50%': { opacity: '0.8', filter: 'brightness(1.2)' },
+                        },
+                        ripple: { 
+                            '0%': { transform: 'scale(0.5)', opacity: '1', borderWidth: '2px' },
+                            '100%': { transform: 'scale(3)', opacity: '0', borderWidth: '0px' },
+                        },
+                        fadeOut: {
+                            '0%': { opacity: '1', visibility: 'visible' },
+                            '100%': { opacity: '0', visibility: 'hidden' },
+                        },
+                        marquee: { // 新增跑马灯关键帧
+                            '0%': { transform: 'translateX(0)' },
+                            '100%': { transform: 'translateX(-50%)' }, // 滚动一半的距离实现无缝循环
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        /* 网格背景 */
+        .bg-grid {
+            background-size: 40px 40px;
+            mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 5%, black 20%, black 80%, transparent 95%);
+            opacity: 0.2;
+        }
+
+        /* 霓虹文字效果 */
+        .text-neon {
+            text-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+        }
+        .text-neon-blue {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+
+        /* 3D 星星的模拟 */
+        .glossy-star {
+            filter: drop-shadow(0 0 30px rgba(0, 240, 255, 0.4));
+        }
+        
+        /* 开屏页专用的星星滤镜（更强烈的发光） */
+        .opening-star {
+            filter: drop-shadow(0 0 50px rgba(0, 240, 255, 0.8));
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff0055;
+        }
+        
+        /* 镂空文字 */
+        .text-outline {
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+            color: transparent;
+        }
+
+        /* 图片混合模式 */
+        .blend-img {
+            mix-blend-mode: luminosity;
+            transition: all 0.3s ease;
+        }
+        .blend-img:hover {
+            mix-blend-mode: normal;
+            filter: contrast(1.2);
+        }
+
+        /* 开屏层背景 */
+        #opening-screen {
+            background: radial-gradient(circle at center, #100520 0%, #050505 100%);
+        }
+    </style>
+</head>
+<body class="font-body bg-acid-black selection:bg-neon-pink selection:text-white">
+
+    <!-- ================= 开屏动画 (独立页) ================= -->
+    <div id="opening-screen" class="fixed inset-0 z-[100] flex items-center justify-center animate-fade-out pointer-events-none">
+        <div class="relative w-full h-full flex items-center justify-center">
+            
+            <!-- 波纹扩散效果 -->
+            <div class="absolute border border-neon-blue/60 rounded-full w-48 h-48 animate-ripple" style="animation-delay: 0s;"></div>
+            <div class="absolute border border-neon-pink/60 rounded-full w-48 h-48 animate-ripple" style="animation-delay: 0.8s;"></div>
+            <div class="absolute border border-white/40 rounded-full w-48 h-48 animate-ripple" style="animation-delay: 1.6s;"></div>
+            
+            <!-- 核心 SVG 星星 -->
+            <svg viewBox="0 0 200 200" class="w-40 h-40 md:w-56 md:h-56 opening-star z-10 animate-pulse-glow">
+                <defs>
+                    <linearGradient id="openingStarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00f0ff;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#ff0055;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path d="M100 10 L120 80 L190 100 L120 120 L100 190 L80 120 L10 100 L80 80 Z" fill="url(#openingStarGrad)" />
+                <path d="M100 20 L110 85 L175 100 L110 115 L100 180 L90 115 L25 100 L90 85 Z" fill="rgba(255,255,255,0.5)" />
+            </svg>
+            
+            <!-- 加载文字 -->
+            <div class="absolute bottom-24 text-white/50 font-display text-sm tracking-[0.5em] animate-pulse">
+                INITIALIZING...
+            </div>
+        </div>
+    </div>
+
+    <!-- 背景网格层 -->
+    <div class="fixed inset-0 bg-grid-pattern bg-grid pointer-events-none z-0"></div>
+    
+    <!-- 顶部导航 -->
+    <nav class="fixed top-0 w-full z-50 px-6 py-6 flex justify-between items-center mix-blend-difference">
+        <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-neon-pink rounded-full animate-pulse"></div>
+            <span class="font-display font-bold text-sm tracking-widest text-white">ES_ONLY_1.0</span>
+        </div>
+        <div class="hidden md:flex gap-8 text-xs font-bold tracking-[0.2em] text-gray-400">
+            <a href="#home" class="hover:text-neon-blue transition-colors">HOME</a>
+            <a href="#lineup" class="hover:text-neon-blue transition-colors">LINEUP</a>
+            <a href="#tickets" class="hover:text-neon-blue transition-colors">TICKETS</a>
+            <!-- INFO 链接更新为打开模态框 -->
+            <a href="#" class="hover:text-neon-blue transition-colors" onclick="document.getElementById('info-modal').classList.remove('hidden'); return false;">INFO</a>
+        </div>
+        <a href="#contact" class="text-xs font-bold border border-white/20 px-4 py-2 rounded-full hover:bg-white hover:text-black transition-all">
+            GET IN TOUCH
+        </a>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="home" class="relative min-h-screen flex flex-col justify-center items-center overflow-hidden pt-20">
+        
+        <!-- 左上角大标题: EVERMORE -->
+        <h1 class="absolute top-[15%] left-[5%] md:left-[8%] text-[12vw] md:text-[10vw] leading-none font-display font-black text-neon-pink text-neon z-10 select-none pointer-events-none">
+            EVERMORE
+        </h1>
+
+        <!-- 中间缩进标题: STARS -->
+        <h1 class="absolute top-[28%] left-[15%] md:left-[25%] text-[12vw] md:text-[10vw] leading-none font-display font-black text-transparent text-outline z-10 select-none pointer-events-none opacity-70">
+            STARS
+        </h1>
+
+        <!-- 右下角标题: UNREAD CHAPTER -->
+        <h1 class="absolute bottom-[10%] right-[5%] md:right-[8%] text-[8vw] md:text-[6vw] leading-none font-body font-black text-neon-pink text-neon z-10 text-right select-none pointer-events-none">
+            未读章节<br>
+            <span class="text-white/80 text-[3vw] md:text-[2vw] tracking-normal font-display font-bold">CHAPTER VOL.01：CALL</span>
+        </h1>
+
+        <!-- 中央 3D 元素 -->
+        <div class="relative w-[80vw] h-[80vw] md:w-[40vw] md:h-[40vw] z-20 animate-float flex items-center justify-center">
+            <!-- 旋转的轨道圈 -->
+            <div class="absolute w-full h-full border-[1px] border-neon-blue/30 rounded-full rotate-45 scale-x-50 animate-spin-slow"></div>
+            <div class="absolute w-[120%] h-[120%] border-[1px] border-neon-pink/20 rounded-full -rotate-12 scale-y-50 animate-spin-slow" style="animation-direction: reverse;"></div>
+            
+            <!-- 核心 SVG 星星 (增加交互) -->
+            <a href="#lineup" class="relative z-30 block w-full h-full group" title="点击查看亮点">
+                <svg viewBox="0 0 200 200" class="w-full h-full glossy-star transform group-hover:scale-110 transition-transform duration-700 cursor-pointer">
+                    <defs>
+                        <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00f0ff;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#ff0055;stop-opacity:1" />
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <path d="M100 10 L120 80 L190 100 L120 120 L100 190 L80 120 L10 100 L80 80 Z" fill="url(#starGrad)" filter="url(#glow)" />
+                    <path d="M100 20 L110 85 L175 100 L110 115 L100 180 L90 115 L25 100 L90 85 Z" fill="rgba(255,255,255,0.3)" />
+                </svg>
+            </a>
+        </div>
+
+        <!-- 底部 CTA 按钮 -->
+        <div class="absolute bottom-[15%] md:bottom-[10%] left-[8%] z-40">
+            <p class="text-gray-400 max-w-xs text-xs mb-6 hidden md:block border-l-2 border-neon-pink pl-4">
+                我们一同为梦想和未来充满期待，<br>永远都有新的惊喜、邂逅、奇迹即将发生。
+            </p>
+            <a href="#tickets" class="group relative inline-flex items-center justify-center px-8 py-3 overflow-hidden font-bold text-white transition-all duration-300 bg-transparent border border-white/30 rounded-full hover:border-neon-pink hover:bg-neon-pink/10">
+                <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-neon-pink rounded-full group-hover:w-56 group-hover:h-56 opacity-20"></span>
+                <span class="relative flex items-center">
+                    START READING <i class="fas fa-chevron-right ml-2 text-xs"></i>
+                </span>
+            </a>
+        </div>
+
+        <!-- 装饰图标 -->
+        <i class="fas fa-crosshairs absolute top-32 right-32 text-neon-blue/50 text-xl animate-spin-slow"></i>
+        <i class="far fa-snowflake absolute bottom-32 left-1/3 text-white/20 text-2xl animate-pulse"></i>
+        <div class="absolute right-10 bottom-1/3 w-16 h-16 border border-neon-pink/30 rounded-full flex items-center justify-center">
+            <div class="w-12 h-12 border border-white/10 rounded-full"></div>
+        </div>
+
+    </header>
+
+    <!-- 内容区域 -->
+    <main class="relative z-20 bg-acid-black">
+        
+        <!-- 跑马灯分隔条 -->
+        <div class="w-full bg-neon-pink overflow-hidden py-2 transform -rotate-1 scale-105 border-y border-black flex">
+            <div class="whitespace-nowrap animate-marquee flex">
+                <!-- 第一组内容 -->
+                <span class="text-black font-display font-black text-xl mx-4">CALL • THEME • EVENT • </span>
+                <span class="text-black font-display font-black text-xl mx-4">EVERMORE STARS • SHANGHAI • </span>
+                <span class="text-black font-display font-black text-xl mx-4">OCTOBER 2ND • MODERN SKY LAB • </span>
+                
+                <!-- 第二组内容 (为了无缝滚动) -->
+                <span class="text-black font-display font-black text-xl mx-4">CALL • THEME • EVENT • </span>
+                <span class="text-black font-display font-black text-xl mx-4">EVERMORE STARS • SHANGHAI • </span>
+                <span class="text-black font-display font-black text-xl mx-4">OCTOBER 2ND • MODERN SKY LAB • </span>
+            </div>
+        </div>
+
+        <!-- 活动信息 -->
+        <section id="lineup" class="py-24 px-6 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-white/10 pb-8">
+                <div>
+                    <h2 class="text-4xl md:text-6xl font-display font-bold text-white mb-2">EVENT<br><span class="text-neon-blue">HIGHLIGHTS</span></h2>
+                </div>
+                <p class="text-right text-gray-400 text-sm max-w-md mt-6 md:mt-0">
+                    // 第一届活动的主题是 "Call"。<br>
+                    不仅是舞台上的“Call”，更是制作人对偶像的“召集”。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Card 1 - STAGE CALL -->
+                <div class="group relative border border-white/10 bg-white/5 p-6 hover:border-neon-pink/50 transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute -top-3 -right-3 w-8 h-8 bg-neon-pink flex items-center justify-center text-black font-bold text-xs">01</div>
+                    <div class="h-48 mb-6 overflow-hidden bg-gray-800 relative">
+                         <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 z-10"></div>
+                         <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&q=80&w=400" onerror="this.onerror=null; this.src='https://placehold.co/400x400/000/fff?text=STAGE';" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 grayscale group-hover:grayscale-0">
+                         <i class="fas fa-microphone absolute bottom-4 left-4 z-20 text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold mb-2">STAGE CALL</h3>
+                    <!-- 描述文本 -->
+                    <p class="text-gray-400 text-sm mb-4">舞台招募&特殊CALL招募介绍</p>
+                    <!-- 链接打开 STAGE CALL 模态框 -->
+                    <a href="#" class="text-neon-pink text-xs font-bold tracking-widest hover:text-white" 
+                       onclick="document.getElementById('stage-call-modal').classList.remove('hidden'); return false;">
+                        VIEW DETAILS ->
+                    </a>
+                </div>
+
+                <!-- Card 2 - GOODS -->
+                <div class="group relative border border-white/10 bg-white/5 p-6 hover:border-neon-blue/50 transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute -top-3 -right-3 w-8 h-8 bg-neon-blue flex items-center justify-center text-black font-bold text-xs">02</div>
+                    <div class="h-48 mb-6 overflow-hidden bg-gray-800 relative">
+                         <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 z-10"></div>
+                         <img src="https://images.unsplash.com/photo-1531972111231-7482a960e109?auto=format&fit=crop&q=80&w=400" onerror="this.onerror=null; this.src='https://placehold.co/400x400/000/fff?text=GOODS';" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 grayscale group-hover:grayscale-0">
+                         <i class="fas fa-gem absolute bottom-4 left-4 z-20 text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold mb-2">GOODS</h3> <!-- 标题改为 GOODS -->
+                    <p class="text-gray-400 text-sm mb-4">ES 主题限定周边。独家设计、首次亮相，收集只属于 EvermoreStars 的记忆。</p>
+                    <!-- 链接打开 GOODS 模态框 -->
+                    <a href="#" class="text-neon-blue text-xs font-bold tracking-widest hover:text-white"
+                       onclick="document.getElementById('goods-modal').classList.remove('hidden'); return false;">
+                        VIEW DETAILS ->
+                    </a>
+                </div>
+
+                <!-- Card 3 - PRODUCER ZONE (新增链接) -->
+                <div class="group relative border border-white/10 bg-white/5 p-6 hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute -top-3 -right-3 w-8 h-8 bg-purple-500 flex items-center justify-center text-black font-bold text-xs">03</div>
+                    <div class="h-48 mb-6 overflow-hidden bg-gray-800 relative">
+                         <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 z-10"></div>
+                         <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=400" onerror="this.onerror=null; this.src='https://placehold.co/400x400/000/fff?text=ZONE';" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 grayscale group-hover:grayscale-0">
+                         <i class="fas fa-users absolute bottom-4 left-4 z-20 text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold mb-2">PRODUCER ZONE</h3>
+                    <p class="text-gray-400 text-sm mb-4">制作人互动交流。分享你的故事，更有精彩的互动游戏和 Coser 嘉宾。</p>
+                    <!-- 新增链接打开 PRODUCER ZONE 模态框 -->
+                    <a href="#" class="text-purple-400 text-xs font-bold tracking-widest hover:text-white"
+                       onclick="document.getElementById('producer-zone-modal').classList.remove('hidden'); return false;">
+                       VIEW DETAILS ->
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 票务信息 -->
+        <section id="tickets" class="py-24 bg-white/5 border-t border-white/10 relative overflow-hidden">
+            <!-- 背景装饰文字 -->
+            <div class="absolute top-0 left-0 text-[20vw] font-display font-black text-white/5 leading-none select-none pointer-events-none">
+                TICKETS
+            </div>
+
+            <div class="max-w-5xl mx-auto px-6 relative z-10">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h2 class="text-4xl font-display font-bold mb-6">GET YOUR<br><span class="text-neon-pink">PASS NOW</span></h2>
+                        <!-- EVENT DETAILS UPDATED HERE -->
+                        <p class="text-gray-400 mb-8">
+                            <i class="fas fa-map-marker-alt text-neon-blue mr-2"></i> SHANGHAI MODERN SKY LAB<br>
+                            <i class="far fa-clock text-neon-blue mr-2"></i> 2026.10.02 | 10:00 AM - 18:00 PM
+                        </p>
+                        
+                        <!-- TICKET TIERS UPDATED HERE (Three tiers, no VIP) -->
+                        <div class="space-y-6">
+                            <!-- 1. 舞台票 Stage Ticket (¥88) -->
+                            <div class="p-4 rounded-lg bg-neon-pink/10 border border-neon-pink/50 transition-all cursor-pointer group hover:bg-neon-pink/20">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-2xl font-bold text-neon-pink">舞台票 / STAGE TICKET</div>
+                                        <div class="text-xs text-gray-400 mt-1">最近距离体验，站立区 (Limited proximity experience)</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-white font-mono text-3xl font-extrabold">¥ 88</div>
+                                        <div class="text-xs text-neon-pink group-hover:text-white transition-colors">BUY NOW -></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 2. 早鸟票 Early Bird Ticket (¥128) -->
+                            <div class="p-4 rounded-lg bg-neon-blue/10 border border-neon-blue/50 transition-all cursor-pointer group hover:bg-neon-blue/20">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-2xl font-bold text-neon-blue">早鸟票 / EARLY BIRD</div>
+                                        <div class="text-xs text-gray-400 mt-1">限时优惠，提前预购 (Time-limited discount)</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-white font-mono text-3xl font-extrabold">¥ 128</div>
+                                        <div class="text-xs text-neon-blue group-hover:text-white transition-colors">BUY NOW -></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 3. 普通票 General Admission Ticket (¥168) -->
+                            <div class="p-4 rounded-lg bg-white/5 border border-white/20 transition-all cursor-pointer group hover:bg-white/10">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-2xl font-bold">普通票 / GENERAL</div>
+                                        <div class="text-xs text-gray-400 mt-1">全日入场资格，普通区域 (Full day admission)</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-white font-mono text-3xl font-extrabold">¥ 168</div>
+                                        <div class="text-xs text-white/50 group-hover:text-white transition-colors">BUY NOW -></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 右侧: 模拟票根视觉 (Details Updated) -->
+                    <div class="relative rotate-3 md:rotate-6 hover:rotate-0 transition-transform duration-500">
+                        <div class="bg-gradient-to-br from-gray-900 to-black border border-white/20 p-8 rounded-xl shadow-2xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-neon-pink blur-[60px] opacity-40"></div>
+                            <div class="flex justify-between items-start mb-12">
+                                <span class="font-display font-bold text-2xl tracking-widest">ES_FEST</span>
+                                <i class="fas fa-barcode text-4xl opacity-50"></i>
+                            </div>
+                            <div class="space-y-2 font-mono text-sm text-gray-400">
+                                <p>DATE: 2026.10.02</p>
+                                <p>TIME: 10:00 AM</p>
+                                <p>LOC: SHANGHAI MODERN SKY LAB</p>
+                                <p class="text-white mt-4 pt-4 border-t border-white/10">ADMIT ONE / GENERAL ADMISSION</p>
+                            </div>
+                            <div class="mt-8 w-full h-1 bg-gradient-to-r from-neon-pink to-neon-blue"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer id="contact" class="bg-black border-t border-white/10 py-12 px-6 text-center md:text-left">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-6 md:mb-0">
+                <h4 class="font-display font-bold text-2xl text-white mb-2">EVERMORE<span class="text-neon-pink">STARS</span></h4>
+                <p class="text-xs text-gray-500">CHAPTER VOL. CALL</p>
+                <!-- 邮箱地址已统一 -->
+                <p class="text-sm text-gray-400 mt-2">
+                     <i class="fas fa-envelope text-neon-blue mr-2"></i> evermorestars@163.com
+                </p>
+            </div>
+            <div class="flex gap-6 text-gray-400 text-xl">
+                <a href="#" class="hover:text-neon-blue transition-colors"><i class="fab fa-weibo"></i></a>
+                <a href="#" class="hover:text-white transition-colors"><i class="fab fa-QQ"></i></a>
+            </div>
+        </div>
+        <p class="text-center text-[10px] text-gray-700 mt-12 uppercase tracking-widest">
+            2026 EvermoreStars | Fan Only | Design by Everstars Group | Inspired by EnsembleStars!!
+        </p>
+    </footer>
+
+    <!-- ================= STAGE CALL 详情页 (Modal) ================= -->
+    <div id="stage-call-modal" class="fixed inset-0 z-[110] hidden bg-acid-black/95 backdrop-blur-md overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 py-12">
+            <div class="relative w-full max-w-4xl bg-deep-purple border border-neon-pink/50 rounded-lg shadow-2xl p-8 md:p-12 animate-in fade-in zoom-in duration-500">
+                
+                <!-- Close Button -->
+                <button onclick="document.getElementById('stage-call-modal').classList.add('hidden')" class="absolute top-4 right-4 text-white/50 hover:text-neon-pink transition-colors z-20" aria-label="Close">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <h2 class="text-4xl md:text-6xl font-display font-bold text-neon-pink mb-4 border-b border-white/10 pb-4">STAGE CALL <span class="text-white">招募详情</span></h2>
+                <p class="text-gray-400 mb-10 text-sm">// 偶像舞台、原创节目、应援 CALL 招募细节</p>
+
+                <!-- 招募内容 -->
+                <div class="space-y-10">
+                    
+                    <!-- 舞台招募形式 -->
+                    <div class="border-l-4 border-neon-blue pl-4">
+                        <h3 class="text-2xl font-display font-bold mb-6 text-neon-blue">《舞台招募形式》</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- 官方舞蹈 -->
+                            <div class="bg-white/5 p-4 rounded-md border border-white/10 transition-all hover:border-neon-blue/80">
+                                <p class="text-xl font-body font-bold mb-1">偶像梦幻祭官方舞蹈</p>
+                                <p class="text-sm text-gray-400 mt-2">招募时间：</p>
+                                <p class="text-base text-neon-blue font-mono">2026年2月19日 - 2026年7月3日</p>
+                            </div>
+                            <!-- 原创舞台 -->
+                            <div class="bg-white/5 p-4 rounded-md border border-white/10 transition-all hover:border-neon-blue/80">
+                                <p class="text-xl font-body font-bold mb-1">原创舞台 (舞台剧、相声、小品)</p>
+                                <p class="text-sm text-gray-400 mt-2">招募时间：</p>
+                                <p class="text-base text-neon-blue font-mono">2026年2月19日 - 2026年6月26日</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CALL招募 -->
+                    <div class="border-l-4 border-neon-pink pl-4">
+                        <h3 class="text-2xl font-display font-bold mb-6 text-neon-pink">《CALL招募》</h3>
+                        <p class="text-lg text-white mb-4">
+                            我们诚挚邀请全世界每一位制作人加入这场活动，为我们深爱的偶像打 CALL。
+                        </p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-3 ml-4 mb-6">
+                            <li class="pl-2">
+                                <span class="text-white font-bold">投稿内容：</span>30秒至1分钟以内的原创应援视频作品。
+                            </li>
+                            <li class="pl-2">
+                                <span class="text-white font-bold">作品形式：</span>打call视频、真人应援祝福、偶像摆阵视频等均可。
+                            </li>
+                            <li class="pl-2">
+                                <span class="text-white font-bold">展示方式：</span>优秀作品将在特设环节的大屏幕上播放。
+                            </li>
+                        </ul>
+                        <p class="text-sm text-gray-400">
+                            招募时间：<span class="text-white font-mono text-base">2026年2月19日 - 2026年6月19日</span>
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- 底部联系方式 (已统一) -->
+                <div class="mt-12 pt-6 border-t border-white/10 text-center">
+                    <p class="text-sm text-gray-500">
+                        更多详情及投稿方式，请关注官方 SNS 账号或联系：
+                    </p>
+                    <a href="mailto:evermorestars@163.com" class="text-neon-pink font-mono text-lg hover:text-white transition-colors">
+                        evermorestars@163.com
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= GOODS 详情页 (Modal) ================= -->
+    <div id="goods-modal" class="fixed inset-0 z-[110] hidden bg-acid-black/95 backdrop-blur-md overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 py-12">
+            <div class="relative w-full max-w-4xl bg-deep-purple border border-neon-blue/50 rounded-lg shadow-2xl p-8 md:p-12 animate-in fade-in zoom-in duration-500">
+                
+                <!-- Close Button -->
+                <button onclick="document.getElementById('goods-modal').classList.add('hidden')" class="absolute top-4 right-4 text-white/50 hover:text-neon-blue transition-colors z-20" aria-label="Close">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <h2 class="text-4xl md:text-6xl font-display font-bold text-neon-blue mb-4 border-b border-white/10 pb-4">GOODS <span class="text-white">特典详情</span></h2>
+                <p class="text-gray-400 mb-10 text-sm">// 随票特典、舞台专属特典、CALL 招募特典清单</p>
+
+                <!-- 特典内容 -->
+                <div class="space-y-10">
+                    
+                    <!-- 随票特典 -->
+                    <div class="border-l-4 border-neon-pink pl-4">
+                        <h3 class="text-2xl font-display font-bold mb-4 text-neon-pink">随票特典</h3>
+                        <p class="text-lg text-white mb-4">
+                            购买任一门票即可获得的限定周边收藏！
+                        </p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4 mb-6">
+                            <li class="pl-2">吧唧 (Badge)</li>
+                            <li class="pl-2">镭射票 (Laser Ticket)</li>
+                            <li class="pl-2">透卡 (Transparent Card)</li>
+                            <li class="pl-2">应援扇 (Cheering Fan)</li>
+                            <li class="pl-2">应援灯 (Cheering Light)</li>
+                        </ul>
+                    </div>
+
+                    <!-- 舞台专属特典 -->
+                    <div class="border-l-4 border-white/50 pl-4">
+                        <h3 class="text-2xl font-display font-bold mb-4 text-white">舞台专属特典</h3>
+                        <p class="text-lg text-white mb-4">
+                            所有参与舞台演出嘉宾的独家纪念！
+                        </p>
+                        <p class="text-gray-300 leading-relaxed">
+                            <i class="fas fa-compact-disc text-white mr-2"></i> 
+                            活动专场CD专辑，内含全场活动录像高清刻录，作为永久纪念，将在活动结束后由官方统一寄送。
+                        </p>
+                    </div>
+
+                    <!-- CALL招募特典 -->
+                    <div class="border-l-4 border-neon-blue pl-4">
+                        <h3 class="text-2xl font-display font-bold mb-4 text-neon-blue">CALL招募特典</h3>
+                        <p class="text-lg text-white mb-4">
+                            感谢所有投稿应援 CALL 视频的制作人！
+                        </p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4 mb-6">
+                            <li class="pl-2">感谢信 (Thank You Letter)</li>
+                            <li class="pl-2">专属徽章 (Exclusive Badge)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 底部联系方式 (已统一) -->
+                <div class="mt-12 pt-6 border-t border-white/10 text-center">
+                    <p class="text-sm text-gray-500">
+                        特典最终解释权归 EvermoreStars 所有。具体设计以实物为准。
+                    </p>
+                    <a href="mailto:evermorestars@163.com" class="text-neon-blue font-mono text-lg hover:text-white transition-colors">
+                        evermorestars@163.com
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================= PRODUCER ZONE 详情页 (Modal) ================= -->
+    <div id="producer-zone-modal" class="fixed inset-0 z-[110] hidden bg-acid-black/95 backdrop-blur-md overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 py-12">
+            <div class="relative w-full max-w-5xl bg-deep-purple border border-purple-500/50 rounded-lg shadow-2xl p-8 md:p-12 animate-in fade-in zoom-in duration-500">
+                
+                <!-- Close Button -->
+                <button onclick="document.getElementById('producer-zone-modal').classList.add('hidden')" class="absolute top-4 right-4 text-white/50 hover:text-purple-500 transition-colors z-20" aria-label="Close">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <h2 class="text-4xl md:text-6xl font-display font-bold text-purple-500 mb-4 border-b border-white/10 pb-4">PRODUCER ZONE <span class="text-white">制作人专属</span></h2>
+                <p class="text-gray-400 mb-10 text-sm">// 专为制作人打造的沉浸式互动体验区，分享爱意，创造回忆。</p>
+
+                <!-- 互动内容网格 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- 1. 祝花区 -->
+                    <div class="bg-white/5 p-6 rounded-lg border-l-4 border-neon-pink">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-gift text-2xl text-neon-pink mr-3"></i>
+                            <h3 class="text-2xl font-body font-bold text-white">祝花区</h3>
+                        </div>
+                        <p class="text-gray-400 mb-2">为偶像献上最诚挚的祝福，祝花区将集中展示来自全国制作人的心意。</p>
+                        <p class="text-sm text-neon-pink font-mono mt-4">
+                            招募时间：2026年2月9日 - 2026年7月10日
+                        </p>
+                    </div>
+
+                    <!-- 2. 合影打卡区 -->
+                    <div class="bg-white/5 p-6 rounded-lg border-l-4 border-neon-blue">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-camera-retro text-2xl text-neon-blue mr-3"></i>
+                            <h3 class="text-2xl font-body font-bold text-white">合影打卡区</h3>
+                        </div>
+                        <p class="text-gray-400">设置有主题背景墙、立牌以及各种道具，为你和偶像留下珍贵的合影纪念！</p>
+                    </div>
+
+                    <!-- 3. 偶像记忆廊 -->
+                    <div class="bg-white/5 p-6 rounded-lg border-l-4 border-purple-500 col-span-1 md:col-span-2">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-book-open text-2xl text-purple-500 mr-3"></i>
+                            <h3 class="text-2xl font-body font-bold text-white">偶像记忆廊</h3>
+                        </div>
+                        <p class="text-gray-400 mb-4">由17个队伍的专辑歌曲、偶像名字、经典台词组成，步入其中，重温与他们共同走过的每一个章节。</p>
+                        <p class="text-sm text-white/70 italic">
+                            // 献给每一个将爱意化为文字的你
+                        </p>
+                    </div>
+
+                    <!-- 4. 专属无料互换区 -->
+                    <div class="bg-white/5 p-6 rounded-lg border-l-4 border-neon-pink">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-exchange-alt text-2xl text-neon-pink mr-3"></i>
+                            <h3 class="text-2xl font-body font-bold text-white">专属无料互换区</h3>
+                        </div>
+                        <p class="text-gray-400">制作人之间交换自制小礼物和无料周边的地方，分享你的创意和爱！</p>
+                    </div>
+                    
+                    <!-- 5. 娃娃拍摄区 -->
+                    <div class="bg-white/5 p-6 rounded-lg border-l-4 border-neon-blue">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-magic text-2xl text-neon-blue mr-3"></i>
+                            <h3 class="text-2xl font-body font-bold text-white">娃娃拍摄区</h3>
+                        </div>
+                        <p class="text-gray-400">提供多种场景和主题，为你的偶像娃娃拍摄精美照片，记录美好瞬间。</p>
+                    </div>
+                    
+                    <!-- 6. 吧台的官摊游戏互动区 -->
+                    <div class="bg-white/5 p-6 rounded-lg border-l-4 border-purple-500">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-gamepad text-2xl text-purple-500 mr-3"></i>
+                            <h3 class="text-2xl font-body font-bold text-white">官摊游戏互动区</h3>
+                        </div>
+                        <p class="text-gray-400">在吧台区域参与官方互动小游戏，有机会获得神秘小礼品和限定特饮券！</p>
+                    </div>
+
+                    <!-- 7. 同人摊主摊位区 -->
+                    <div class="bg-white/5 p-6 rounded-lg border-l-4 border-white/50">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-store text-2xl text-white mr-3"></i>
+                            <h3 class="text-2xl font-body font-bold text-white">同人摊主摊位区</h3>
+                        </div>
+                        <p class="text-gray-400">汇聚了众多优秀的同人创作摊主，为你带来各种精美独特的周边和作品。</p>
+                    </div>
+
+                </div>
+
+                <!-- 底部联系方式 (已统一) -->
+                <div class="mt-12 pt-6 border-t border-white/10 text-center">
+                    <p class="text-sm text-gray-500">
+                        祝花招募等具体事宜，请联系：
+                    </p>
+                    <a href="mailto:evermorestars@163.com" class="text-purple-400 font-mono text-lg hover:text-white transition-colors">
+                        evermorestars@163.com
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= INFO 详情页 (Modal) - 新增 ================= -->
+    <div id="info-modal" class="fixed inset-0 z-[110] hidden bg-acid-black/95 backdrop-blur-md overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="flex flex-col items-center justify-start min-h-screen px-4 py-12 md:py-20">
+            <div class="relative w-full max-w-6xl bg-deep-purple border border-neon-blue/50 rounded-lg shadow-2xl p-8 md:p-16 animate-in fade-in zoom-in duration-500">
+                
+                <!-- Close Button -->
+                <button onclick="document.getElementById('info-modal').classList.add('hidden')" class="absolute top-4 right-4 md:top-6 md:right-6 text-white/50 hover:text-neon-blue transition-colors z-20" aria-label="Close">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+
+                <h2 class="text-5xl md:text-8xl font-display font-black text-neon-blue mb-2 text-outline">INFO</h2>
+                <h3 class="text-3xl font-display font-bold text-white mb-10 border-b border-white/10 pb-4">
+                    活动与场地信息 <span class="text-neon-pink">OVERVIEW</span>
+                </h3>
+
+                <!-- 1. 活动介绍 -->
+                <div class="mb-16">
+                    <div class="flex items-center mb-6">
+                        <div class="w-6 h-1 bg-neon-pink mr-3"></div>
+                        <h4 class="text-2xl md:text-3xl font-display font-bold text-neon-pink">《活动介绍》</h4>
+                    </div>
+                    
+                    <div class="space-y-4 text-gray-300 pl-9 border-l border-white/10">
+                        <p class="text-lg leading-relaxed">
+                            <span class="text-white font-bold text-xl">「EvermoreStars 未读章节」</span> 简称 <span class="text-neon-blue font-bold">Everstars</span>，是我们基于对偶像和制作人文化的热爱所创造的全新活动。
+                        </p>
+                        <p class="text-lg leading-relaxed">
+                            <i class="fas fa-star text-neon-pink mr-2"></i> 
+                            <span class="font-bold text-white">核心口号：</span> 你注视的光芒，因你而闪耀。
+                        </p>
+                        <p class="text-lg leading-relaxed">
+                            <i class="fas fa-quote-right text-neon-blue mr-2"></i> 
+                            这是一篇由你献上的**未读章节**，无论你是制作人还是偶像，都是故事的主角。我们因对小偶像们的热爱而相遇，这份热爱成就着彼此的闪耀。在 EvermoreStars 的舞台，我们将一同为梦想和未来充满期待，因为永远都有新的惊喜、邂逅、奇迹即将发生。
+                        </p>
+                        <p class="text-sm text-gray-500 pt-4 border-t border-white/5">
+                            本届主题：<span class="text-neon-pink font-mono">CALL</span> (召集)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 2. 场地信息 -->
+                <div>
+                    <div class="flex items-center mb-6">
+                        <div class="w-6 h-1 bg-neon-blue mr-3"></div>
+                        <h4 class="text-2xl md:text-3xl font-display font-bold text-neon-blue">《场地信息》</h4>
+                    </div>
+                    
+                    <div class="text-gray-300 pl-9 border-l border-white/10">
+                        <p class="text-lg mb-6">
+                            <i class="fas fa-map-pin text-neon-pink mr-2"></i> 
+                            <span class="text-white font-bold">地址：</span> 上海市虹口区瑞虹路188号瑞虹天地月亮湾309室 摩登天空 <span class="text-neon-blue font-mono">(MODERN SKY LAB)</span>
+                        </p>
+
+                        <!-- 场地图片 -->
+                        <h5 class="text-xl font-body font-bold text-white mb-4 mt-8">主会场实景图 (Main Venue)</h5>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <img src="uploaded:01.png-92dd5ddd-77ef-4099-9c55-89170a925c2c" alt="摩登天空现场图景 1" class="w-full h-40 object-cover rounded-lg border border-white/10 shadow-lg blend-img">
+                            <img src="uploaded:02.png-f3251db2-ba3b-4f1b-85be-6a69e514b81b" alt="摩登天空现场图景 2" class="w-full h-40 object-cover rounded-lg border border-white/10 shadow-lg blend-img">
+                            <img src="uploaded:04.png-8c667478-35d5-4814-a231-ff0a716927d9" alt="摩登天空现场图景 3" class="w-full h-40 object-cover rounded-lg border border-white/10 shadow-lg blend-img">
+                        </div>
+
+                        <!-- 休息室图片 -->
+                        <h5 class="text-xl font-body font-bold text-white mb-4 mt-8">舞台休息室 (Backstage Lounge)</h5>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <img src="uploaded:休息室A'.png-a14d7c43-91c6-4a55-98a9-8560cad0c19b" alt="舞台休息室 A" class="w-full h-40 object-cover rounded-lg border border-white/10 shadow-lg blend-img">
+                            <img src="uploaded:休息室B.png-e39b3396-76e6-4e9a-8f00-07ff2a837eac" alt="舞台休息室 B" class="w-full h-40 object-cover rounded-lg border border-white/10 shadow-lg blend-img">
+                            <img src="uploaded:休息室C.png-12400c24-e71e-4def-ab5c-461bd5af7c49" alt="舞台休息室 C" class="w-full h-40 object-cover rounded-lg border border-white/10 shadow-lg blend-img">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部信息 -->
+                <div class="mt-12 pt-6 border-t border-white/10 text-center">
+                    <p class="text-sm text-gray-500">
+                        交通信息及更多详情，请以官方通知为准。
+                    </p>
+                    <a href="mailto:evermorestars@163.com" class="text-neon-pink font-mono text-lg hover:text-white transition-colors">
+                        evermorestars@163.com
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 脚本：处理开屏动画结束后禁止交互层遮挡 -->
+    <script>
+        window.addEventListener('load', () => {
+            // 动画总时长约3.5s (2.5s延迟 + 1s淡出)
+            setTimeout(() => {
+                const opening = document.getElementById('opening-screen');
+                if(opening) {
+                    opening.style.display = 'none'; // 彻底移除，确保不遮挡交互
+                }
+            }, 3500);
+        });
+    </script>
+</body>
+</html>
